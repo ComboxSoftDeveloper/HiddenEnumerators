@@ -1,0 +1,56 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HiddenEnumerators - результаты</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1000px; margin: 24px auto; }
+  h2 { margin: 32px 0 4px 0; }
+  .hint { color: #666; margin: 0 0 8px 0; }
+  canvas { margin: 8px 0 24px 0; }
+</style>
+</head>
+<body>
+<h1>Скрытые аллокации foreach: .NET 8 vs 9 vs 10</h1>
+<p class="hint">Странице нужен интернет для загрузки Chart.js - открывайте на машине с доступом в сеть.</p>
+<div id="root"></div>
+<script>
+const DATA = [{"title":"SortedListVsDictionary","labels":["Dictionary_Foreach","SortedList_Foreach","Dictionary_AsIEnumerable_Foreach"],"series":[{"name":".NET 10.0","mean":[15.66391374383654,20.898862183094025,21.731502413749695],"alloc":[0,0,0]},{"name":".NET 8.0","mean":[16.854562958081562,62.20454136530558,61.25064094861349],"alloc":[0,48,48]},{"name":".NET 9.0","mean":[16.98344846566518,61.51394064609821,144.56898314612252],"alloc":[0,48,48]}]},{"title":"ArrayDeabstraction","labels":["Array_Direct","Array_AsIEnumerable","Array_ViaHelper","EmptyArray_AsIEnumerable"],"series":[{"name":".NET 10.0","mean":[247.14519060575046,287.870991230011,289.7015889485677,0.09978264570236206],"alloc":[0,0,0,0]},{"name":".NET 8.0","mean":[275.7046095530192,1198.2759602864583,1234.0108489990234,4.281743417183558],"alloc":[0,32,32,0]},{"name":".NET 9.0","mean":[252.63347307840982,1301.817855834961,1346.1839548746746,4.177675445874532],"alloc":[0,32,32,0]}]},{"title":"ListSizeCliff (Size=10)","labels":["List_Direct","List_AsIEnumerable","List_ViaHelper"],"series":[{"name":".NET 10.0","mean":[10.863714814186096,11.782881518205008,12.651665721620832],"alloc":[0,0,0]},{"name":".NET 8.0","mean":[11.214316487312317,41.11602544784546,38.2565302508218],"alloc":[0,40,40]},{"name":".NET 9.0","mean":[10.748072820050377,34.92493828137716,35.454241832097374],"alloc":[0,40,40]}]},{"title":"ListSizeCliff (Size=1000)","labels":["List_Direct","List_AsIEnumerable","List_ViaHelper"],"series":[{"name":".NET 10.0","mean":[731.4770571390787,717.6734117361216,719.6797224191519],"alloc":[0,0,0]},{"name":".NET 8.0","mean":[723.8172976175944,2377.865982055664,2488.964080810547],"alloc":[0,40,40]},{"name":".NET 9.0","mean":[721.6185315450033,2611.2045542399087,2552.128219604492],"alloc":[0,40,40]}]},{"title":"ListSizeCliff (Size=1000000)","labels":["List_Direct","List_AsIEnumerable","List_ViaHelper"],"series":[{"name":".NET 10.0","mean":[721327.2836538461,749167.919921875,723362.3798076923],"alloc":[0,0,0]},{"name":".NET 8.0","mean":[723711.8233816965,2536939.4401041665,2365296.6536458335],"alloc":[0,40,40]},{"name":".NET 9.0","mean":[751706.08203125,2563917.5260416665,2562055.528846154],"alloc":[0,40,40]}]}];
+const COLORS = { '.NET 8.0': '#8e8e93', '.NET 9.0': '#f0a30a', '.NET 10.0': '#512bd4' };
+const root = document.getElementById('root');
+
+function addChart(title, labels, datasets, yTitle) {
+  const h = document.createElement('h2');
+  h.textContent = title;
+  root.appendChild(h);
+  const canvas = document.createElement('canvas');
+  canvas.height = 90;
+  root.appendChild(canvas);
+  new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, title: { display: true, text: yTitle } } }
+    }
+  });
+}
+
+for (const g of DATA) {
+  addChart(
+    g.title + ' - время',
+    g.labels,
+    g.series.map(s => ({ label: s.name, data: s.mean, backgroundColor: COLORS[s.name] ?? '#444' })),
+    'ns/op (меньше - лучше)');
+
+  addChart(
+    g.title + ' - аллокации',
+    g.labels,
+    g.series.map(s => ({ label: s.name, data: s.alloc, backgroundColor: COLORS[s.name] ?? '#444' })),
+    'B/op (ноль - идеал)');
+}
+</script>
+</body>
+</html>
